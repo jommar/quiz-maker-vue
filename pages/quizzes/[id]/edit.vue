@@ -7,7 +7,6 @@
       label="Quiz Title"
       outlined
       dense
-      class="mb-4"
     />
 
     <v-switch
@@ -15,7 +14,7 @@
       label="Randomize Questions"
       inset
       color="primary"
-      class="mb-2"
+      density="compact"
     />
 
     <v-switch
@@ -23,7 +22,7 @@
       label="Randomize Options"
       inset
       color="primary"
-      class="mb-2"
+      density="compact"
     />
 
     <v-switch
@@ -31,7 +30,7 @@
       label="Show Correct Answer Immediately"
       inset
       color="primary"
-      class="mb-4"
+      density="compact"
     />
 
     <v-divider class="my-4" />
@@ -112,6 +111,9 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getQuizByTitle, updateQuiz } from "~/utils/storageService";
+import { HOME_ROUTE } from "~/constants";
+
+const { $showSnackbar } = useNuxtApp();
 
 const router = useRouter();
 const route = useRoute();
@@ -145,7 +147,7 @@ const loadQuiz = () => {
     quiz.value = JSON.parse(JSON.stringify(found));
   } else {
     alert("Quiz not found!");
-    router.push("/quizzes");
+    router.push(HOME_ROUTE);
   }
 };
 
@@ -163,16 +165,16 @@ const removeQuestion = (index) => {
 
 const saveQuiz = () => {
   if (!quiz.value.title.trim()) {
-    alert("Quiz title is required!");
+    $showSnackbar("Quiz title is required!");
     return;
   }
   if (quiz.value.questions.length === 0) {
-    alert("Add at least one question!");
+    $showSnackbar("Add at least one question!");
     return;
   }
   updateQuiz(quiz.value);
-  alert("Quiz updated successfully!");
-  router.push("/quizzes");
+  $showSnackbar("Quiz updated successfully ✅");
+  router.push(HOME_ROUTE);
 };
 
 onMounted(() => {

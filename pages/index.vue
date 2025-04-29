@@ -120,10 +120,6 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <v-snackbar v-model="snackbar" timeout="3000">
-      {{ snackbarMessage }}
-    </v-snackbar>
   </v-container>
 </template>
 
@@ -142,32 +138,33 @@ import {
   getBestScores,
 } from "~/utils/bestScoreService";
 
+const { $showSnackbar, $confirm } = useNuxtApp();
+
 const router = useRouter();
 const quizzes = ref([]);
 const importing = ref(false);
 const importJson = ref("");
 const exportDialog = ref(false);
 const selectedToExport = ref([]);
-const snackbar = ref(false);
-const snackbarMessage = ref("");
 const bestScores = ref({});
 const exportJsonText = ref("");
 
 const copyExportJson = () => {
   navigator.clipboard.writeText(exportJsonText.value);
-  showSnackbar("Export datta copied to clipboard ✅");
+  $showSnackbar("Export datta copied to clipboard ✅");
 };
 
 const hasBestScores = computed(() => {
   return Object.keys(bestScores.value).length > 0;
 });
 
-const deleteQuiz = (title) => {
-  if (confirm(`Are you sure you want to delete "${title}"?`)) {
+const deleteQuiz = async (title) => {
+  const ok = await $confirm(`Are you sure you want to delete "${title}"?`);
+  if (ok) {
     const allQuizzes = getQuizzes();
     const updatedQuizzes = allQuizzes.filter((q) => q.title !== title);
     saveQuizzes(updatedQuizzes);
-    showSnackbar(`Quiz "${title}" deleted successfully!`);
+    $showSnackbar(`Quiz "${title}" deleted successfully!`);
     refreshView();
   }
 };
@@ -177,27 +174,26 @@ const refreshView = () => {
   bestScores.value = getBestScores();
 };
 
-const showSnackbar = (message) => {
-  snackbarMessage.value = message;
-  snackbar.value = true;
-};
-
-const clearAllBestScores = () => {
-  if (confirm("Are you sure you want to clear all best scores?")) {
+const clearAllBestScores = async () => {
+  const ok = await $confirm("Are you sure you want to clear all best scores?");
+  if (ok) {
     clearBestScores();
-    showSnackbar("All best scores cleared ✅");
+    $showSnackbar("All best scores cleared ✅");
     refreshView();
   }
 };
 
-const clearScore = (quizTitle) => {
-  if (confirm(`Clear best score for "${quizTitle}"?`)) {
+const clearScore = async (quizTitle) => {
+  const ok = await $confirm(`Clear best score for "${quizTitle}"?`);
+  if (ok) {
     const scores = getBestScores();
     if (scores[quizTitle]) {
       delete scores[quizTitle];
       localStorage.setItem("bestScores", JSON.stringify(scores));
-      showSnackbar(`Best score for "${quizTitle}" cleared ✅`);
+      $showSnackbar(`Best score for "${quizTitle}" cleared ✅`);
       refreshView();
+    } else {
+      $showSnackbar(`No best score found for "${quizTitle}"`);
     }
   }
 };

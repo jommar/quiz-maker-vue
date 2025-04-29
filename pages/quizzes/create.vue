@@ -10,35 +10,27 @@
       class="mb-4"
     />
 
-    <v-row>
-      <v-col>
-        <v-switch
-          v-model="quiz.config.randomizeQuestions"
-          label="Randomize Questions"
-          inset
-          color="primary"
-          class="mb-2"
-        />
-      </v-col>
-      <v-col>
-        <v-switch
-          v-model="quiz.config.randomizeOptions"
-          label="Randomize Options"
-          inset
-          color="primary"
-          class="mb-4"
-        />
-      </v-col>
-      <v-col>
-        <v-switch
-          v-model="quiz.config.showCorrectAnswersWhileAnswering"
-          label="Show Correct Answer Immediately"
-          inset
-          color="primary"
-          class="mb-4"
-        />
-      </v-col>
-    </v-row>
+    <v-switch
+      v-model="quiz.config.randomizeQuestions"
+      label="Randomize Questions"
+      inset
+      color="primary"
+      density="compact"
+    />
+    <v-switch
+      v-model="quiz.config.randomizeOptions"
+      label="Randomize Options"
+      inset
+      color="primary"
+      density="compact"
+    />
+    <v-switch
+      v-model="quiz.config.showCorrectAnswersWhileAnswering"
+      label="Show Correct Answer Immediately"
+      inset
+      color="primary"
+      density="compact"
+    />
 
     <v-divider class="my-4" />
 
@@ -108,13 +100,9 @@
       <v-divider class="my-4" />
     </div>
 
-    <v-btn color="primary" @click="addQuestion"> Add Question </v-btn>
+    <v-btn color="primary" @click="addQuestion" :disabled="!quiz.title"> Add Question </v-btn>
 
-    <v-btn color="success" @click="saveQuiz"> Save Quiz </v-btn>
-
-    <v-snackbar v-model="snackbar" timeout="3000">
-      {{ snackbarMessage }}
-    </v-snackbar>
+    <v-btn color="success" @click="saveQuiz" :disabled="!quiz.questions.length"> Save Quiz </v-btn>
   </v-container>
 </template>
 
@@ -122,6 +110,9 @@
 import { ref } from "vue";
 import { addQuiz } from "~/utils/storageService";
 import { useRouter } from "vue-router";
+import { HOME_ROUTE } from "~/constants";
+
+const { $showSnackbar } = useNuxtApp();
 
 const router = useRouter();
 
@@ -134,12 +125,6 @@ const quiz = ref({
     showCorrectAnswersWhileAnswering: false,
   },
 });
-const snackbar = ref(false);
-const snackbarMessage = ref("");
-const showSnackbar = (message) => {
-  snackbarMessage.value = message;
-  snackbar.value = true;
-};
 
 const addOption = (qIndex) => {
   quiz.value.questions[qIndex].options.push("");
@@ -149,7 +134,7 @@ const removeOption = (qIndex, oIndex) => {
   if (quiz.value.questions[qIndex].options.length > 2) {
     quiz.value.questions[qIndex].options.splice(oIndex, 1);
   } else {
-    showSnackbar("A question must have at least 2 options.");
+    $showSnackbar("A question must have at least 2 options.");
   }
 };
 
@@ -167,15 +152,15 @@ const removeQuestion = (index) => {
 
 const saveQuiz = () => {
   if (!quiz.value.title.trim()) {
-    showSnackbar("Quiz title is required!");
+    $showSnackbar("Quiz title is required!");
     return;
   }
   if (quiz.value.questions.length === 0) {
-    showSnackbar("Add at least one question!");
+    $showSnackbar("Add at least one question!");
     return;
   }
   addQuiz(quiz.value);
-  showSnackbar("Quiz created successfully ✅");
-  router.push("/quizzes");
+  $showSnackbar("Quiz created successfully ✅");
+  router.push(HOME_ROUTE);
 };
 </script>

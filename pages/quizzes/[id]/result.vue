@@ -1,5 +1,5 @@
 <template>
-  <v-container v-if="quiz">
+  <v-container v-if="quiz && selectedAnswers.length">
     <h1 class="text-h5 font-weight-bold mb-4">{{ quiz.title }} - Results</h1>
 
     <v-card
@@ -43,18 +43,19 @@
       Score: {{ score }} / {{ quiz.questions.length }}
     </h2>
 
-    <v-btn color="primary" @click="goHome"> Go Back to Quizzes </v-btn>
+    <v-btn color="primary" @click="goHome">Go Back to Quizzes</v-btn>
   </v-container>
 
   <v-container v-else>
-    <h2>Quiz not found or missing answers.</h2>
+    <v-alert type="error" title="Quiz not found or missing answers.">
+      Unable to display quiz results. Please retake the quiz.
+    </v-alert>
   </v-container>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { getQuizByTitle } from "~/utils/storageService";
 import { saveBestScore } from "~/utils/bestScoreService";
 
 const route = useRoute();
@@ -63,21 +64,26 @@ const router = useRouter();
 const quiz = ref(null);
 const selectedAnswers = ref([]);
 
-const saveScoreIfBest = () => {
-  if (quiz.value) {
-    saveBestScore(quiz.value.title, score.value);
-  }
-};
-
 const loadQuizAndAnswers = () => {
-  const quizTitle = decodeURIComponent(route.params.id);
-  quiz.value = getQuizByTitle(quizTitle);
+  const queryQuiz = route.query.quiz;
+  const queryAnswers = route.query.answers;
 
-  const answers = route.query.answers;
-  if (answers) {
-    selectedAnswers.value = JSON.parse(answers);
+  if (queryQuiz && queryAnswers) {
+    try {
+      quiz.value = JSON.parse(decodeURIComponent(queryQuiz));
+      selectedAnswers.value = JSON.parse(queryAnswers);
+    } catch (e) {
+      console.error("Failed to load quiz or answers", e);
+    }
   }
 };
+
+const score = computed(() => {
+  if (!quiz.value) return 0;
+  return quiz.value.questions.reduce((total, question, index) => {
+    return total + (question.answer === selectedAnswers.value[index] ? 1 : 0);
+  }, 0);
+});
 
 const getOptionStatus = (qIndex, oIndex) => {
   const correct = quiz.value.questions[qIndex].answer;
@@ -106,19 +112,22 @@ const getOptionStatus = (qIndex, oIndex) => {
   return { color: "default", icon: "", label: "" };
 };
 
-const score = computed(() => {
-  if (!quiz.value) return 0;
-  return quiz.value.questions.reduce((total, question, index) => {
-    return total + (question.answer === selectedAnswers.value[index] ? 1 : 0);
-  }, 0);
-});
-
 const goHome = () => {
   router.push("/");
 };
 
 onMounted(() => {
-  loadQuizAndAnswers();
-  saveScoreIfBest();
+  const rawAnswers = route.query.answers;
+  const rawQuiz = sessionStorage.getItem("activeQuiz");
+
+  try {
+    if (!rawAnswers || !rawQuiz) throw new Error("Missing quiz or answers");
+
+    quiz.value = JSON.parse(rawQuiz);
+    selectedAnswers.value = JSON.parse(rawAnswers);
+  } catch (e) {
+    console.error("Error loading result data:", e);
+    router.push("/"); // fallback
+  }
 });
 </script>

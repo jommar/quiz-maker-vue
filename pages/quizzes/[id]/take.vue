@@ -23,16 +23,21 @@
       </v-card-text>
 
       <v-card-actions>
-        <v-btn text @click="prevQuestion" :disabled="currentQuestionIndex === 0"
-          >Previous</v-btn
+        <v-btn
+          text
+          @click="prevQuestion"
+          :disabled="currentQuestionIndex === 0"
         >
+          Previous
+        </v-btn>
         <v-spacer />
         <v-btn
           text
           @click="nextQuestion"
           :disabled="currentQuestionIndex === quiz.questions.length - 1"
-          >Next</v-btn
         >
+          Next
+        </v-btn>
         <v-btn
           color="primary"
           @click="submitQuiz"
@@ -42,10 +47,6 @@
         </v-btn>
       </v-card-actions>
     </v-card>
-
-    <v-snackbar v-model="snackbar" timeout="3000">
-      {{ snackbarMessage }}
-    </v-snackbar>
   </v-container>
 
   <v-container v-else>
@@ -54,10 +55,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getQuizByTitle } from "~/utils/storageService";
 
+const { $showSnackbar } = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
 
@@ -65,18 +67,20 @@ const quiz = ref(null);
 const currentQuestionIndex = ref(0);
 const selectedAnswers = ref([]);
 
-const snackbar = ref(false);
-const snackbarMessage = ref("");
-const showSnackbar = (msg) => {
-  snackbarMessage.value = msg;
-  snackbar.value = true;
-};
-
-const shuffleArray = (array) => {
-  return array
+// Utility: shuffle array
+const shuffleArray = (array) =>
+  array
     .map((value) => ({ value, sort: Math.random() }))
     .sort((a, b) => a.sort - b.sort)
     .map(({ value }) => value);
+
+// Randomize options while preserving the correct answer
+const shuffleOptionsPreserveAnswer = (question) => {
+  const correctAnswerText = question.options[question.answer];
+  question.options = shuffleArray([...question.options]);
+  question.answer = question.options.findIndex(
+    (option) => option === correctAnswerText
+  );
 };
 
 const loadQuiz = () => {
@@ -84,37 +88,33 @@ const loadQuiz = () => {
   const loadedQuiz = getQuizByTitle(decodeURIComponent(quizTitle));
 
   if (loadedQuiz) {
-    // Clone the quiz deeply to avoid modifying localStorage data directly
-    quiz.value = JSON.parse(JSON.stringify(loadedQuiz));
+    quiz.value = JSON.parse(JSON.stringify(loadedQuiz)); // deep clone
 
-    // Apply randomization if enabled
     if (quiz.value.config?.randomizeQuestions) {
       quiz.value.questions = shuffleArray(quiz.value.questions);
     }
 
     if (quiz.value.config?.randomizeOptions) {
-      quiz.value.questions.forEach((q) => {
-        q.options = shuffleArray(q.options);
-      });
+      quiz.value.questions.forEach(shuffleOptionsPreserveAnswer);
     }
 
     selectedAnswers.value = new Array(quiz.value.questions.length).fill(null);
   }
 };
 
-const currentQuestion = computed(() => {
-  return quiz.value ? quiz.value.questions[currentQuestionIndex.value] : null;
-});
+const currentQuestion = computed(() =>
+  quiz.value ? quiz.value.questions[currentQuestionIndex.value] : null
+);
 
 const onAnswerSelected = () => {
-  const correctAnswer = currentQuestion.value.answer;
   const selected = selectedAnswers.value[currentQuestionIndex.value];
+  const correctAnswer = currentQuestion.value.answer;
 
   if (
     quiz.value.config?.showCorrectAnswersWhileAnswering &&
     selected !== correctAnswer
   ) {
-    showSnackbar(
+    $showSnackbar(
       `Wrong! Correct answer is: ${currentQuestion.value.options[correctAnswer]}`
     );
   }
@@ -137,9 +137,13 @@ const prevQuestion = () => {
 };
 
 const submitQuiz = () => {
+  sessionStorage.setItem("activeQuiz", JSON.stringify(quiz.value));
+
   router.push({
     path: `/quizzes/${encodeURIComponent(route.params.id)}/result`,
-    query: { answers: JSON.stringify(selectedAnswers.value) },
+    query: {
+      answers: JSON.stringify(selectedAnswers.value),
+    },
   });
 };
 
