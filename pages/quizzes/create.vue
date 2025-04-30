@@ -112,7 +112,7 @@ import { addQuiz } from "~/utils/storageService";
 import { useRouter } from "vue-router";
 import { HOME_ROUTE } from "~/constants";
 
-const { $showSnackbar } = useNuxtApp();
+const { $toast } = useNuxtApp();
 
 const router = useRouter();
 
@@ -134,7 +134,7 @@ const removeOption = (qIndex, oIndex) => {
   if (quiz.value.questions[qIndex].options.length > 2) {
     quiz.value.questions[qIndex].options.splice(oIndex, 1);
   } else {
-    $showSnackbar("A question must have at least 2 options.");
+    $toast("A question must have at least 2 options.");
   }
 };
 
@@ -152,15 +152,15 @@ const removeQuestion = (index) => {
 
 const saveQuiz = () => {
   if (!quiz.value.title.trim()) {
-    $showSnackbar("Quiz title is required!");
+    $toast("Quiz title is required!");
     return;
   }
   if (quiz.value.questions.length === 0) {
-    $showSnackbar("Add at least one question!");
+    $toast("Add at least one question!");
     return;
   }
   addQuiz(quiz.value);
-  $showSnackbar("Quiz created successfully ✅");
+  $toast("Quiz created successfully ✅");
   router.push(HOME_ROUTE);
 };
 </script>

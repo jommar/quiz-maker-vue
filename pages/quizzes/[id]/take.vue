@@ -59,7 +59,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { getQuizByTitle } from "~/utils/storageService";
 
-const { $showSnackbar } = useNuxtApp();
+const { $toast } = useNuxtApp();
 const route = useRoute();
 const router = useRouter();
 
@@ -114,7 +114,7 @@ const onAnswerSelected = () => {
     quiz.value.config?.showCorrectAnswersWhileAnswering &&
     selected !== correctAnswer
   ) {
-    $showSnackbar(
+    $toast(
       `Wrong! Correct answer is: ${currentQuestion.value.options[correctAnswer]}`
     );
   }

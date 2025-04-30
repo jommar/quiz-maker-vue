@@ -138,7 +138,7 @@ import {
   getBestScores,
 } from "~/utils/bestScoreService";
 
-const { $showSnackbar, $confirm } = useNuxtApp();
+const { $confirm, $toast } = useNuxtApp();
 
 const router = useRouter();
 const quizzes = ref([]);
@@ -151,7 +151,7 @@ const exportJsonText = ref("");
 
 const copyExportJson = () => {
   navigator.clipboard.writeText(exportJsonText.value);
-  $showSnackbar("Export datta copied to clipboard ✅");
+  $toast("Export data copied to clipboard ✅");
 };
 
 const hasBestScores = computed(() => {
@@ -164,7 +164,7 @@ const deleteQuiz = async (title) => {
     const allQuizzes = getQuizzes();
     const updatedQuizzes = allQuizzes.filter((q) => q.title !== title);
     saveQuizzes(updatedQuizzes);
-    $showSnackbar(`Quiz "${title}" deleted successfully!`);
+    $toast(`Quiz "${title}" deleted successfully!`);
     refreshView();
   }
 };
@@ -178,7 +178,7 @@ const clearAllBestScores = async () => {
   const ok = await $confirm("Are you sure you want to clear all best scores?");
   if (ok) {
     clearBestScores();
-    $showSnackbar("All best scores cleared ✅");
+    $toast("All best scores cleared ✅");
     refreshView();
   }
 };
@@ -190,10 +190,10 @@ const clearScore = async (quizTitle) => {
     if (scores[quizTitle]) {
       delete scores[quizTitle];
       localStorage.setItem("bestScores", JSON.stringify(scores));
-      $showSnackbar(`Best score for "${quizTitle}" cleared ✅`);
+      $toast(`Best score for "${quizTitle}" cleared ✅`);
       refreshView();
     } else {
-      $showSnackbar(`No best score found for "${quizTitle}"`);
+      $toast(`No best score found for "${quizTitle}"`);
     }
   }
 };
@@ -201,11 +201,11 @@ const clearScore = async (quizTitle) => {
 const doImport = () => {
   const ok = importQuizzes(importJson.value);
   if (ok) {
-    alert("Import successful ✅");
+    $toast("Import successful ✅");
     importing.value = false;
     quizzes.value = getQuizzes(); // reload the new data
   } else {
-    alert("Import failed ❌");
+    $toast("Import failed ❌");
   }
 };
 
@@ -219,7 +219,7 @@ const doExport = () => {
   const json = JSON.stringify(filtered);
 
   navigator.clipboard.writeText(json);
-  alert(`Exported ${filtered.length} quiz(es) to clipboard ✅`);
+  $toast(`Exported ${filtered.length} quiz(es) to clipboard ✅`);
   exportDialog.value = false;
 };
 
