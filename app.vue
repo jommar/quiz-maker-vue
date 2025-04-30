@@ -40,7 +40,9 @@ const theme = useTheme();
 const isDark = computed(() => theme.global.name.value === "dark");
 
 const toggleTheme = () => {
-  theme.global.name.value = isDark.value ? "light" : "dark";
+  const newTheme = isDark.value ? "light" : "dark";
+  theme.global.name.value = newTheme;
+  localStorage.setItem("theme", newTheme); // persist it
 };
 
 const goHome = () => {
@@ -49,5 +51,14 @@ const goHome = () => {
 
 const isOnQuizzesPage = computed(() => {
   return route.path === HOME_ROUTE;
+});
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark" || savedTheme === "light") {
+    theme.global.name.value = savedTheme;
+  } else {
+    localStorage.setItem("theme", theme.global.name.value); // store default once
+  }
 });
 </script>
