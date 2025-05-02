@@ -203,7 +203,7 @@ const doImport = () => {
   if (ok) {
     $toast("Import successful ✅");
     importing.value = false;
-    quizzes.value = getQuizzes(); // reload the new data
+    quizzes.value = getQuizzes();
   } else {
     $toast("Import failed ❌");
   }
